@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usage-limit skip catch-up — live grade FAIL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%238c1c1c' width='16' height='16'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --paper: #f4efe4;
+      --ink: #1d1914;
+      --muted: #5e564c;
+      --line: #ddcfb8;
+      --fail: #8c1c1c;
+      --fail-ink: #fff6f1;
+      --draft: #8a5310;
+      --chip: #efe6d4;
+      --card: #fffaf2;
+      --hold: #245c45;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.45;
+    }
+    .banner {
+      background: var(--fail);
+      color: var(--fail-ink);
+      padding: 28px 20px 32px;
+    }
+    .banner-inner, main { max-width: 1080px; margin: 0 auto; }
+    .kicker {
+      margin: 0 0 8px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .banner h1 {
+      margin: 0;
+      font-size: clamp(72px, 14vw, 120px);
+      line-height: 0.8;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+    .banner p { max-width: 68ch; font-size: 1.12rem; }
+    .banner a { color: inherit; }
+    main { padding: 28px 20px 64px; }
+    h2 { font-size: 1.7rem; line-height: 1.15; margin: 2rem 0 0.4rem; }
+    h3 { font-size: 1.15rem; margin: 0 0 0.3rem; }
+    a { color: var(--draft); }
+    .lede { font-size: 1.08rem; max-width: 70ch; }
+    .note, .live-grade, .check, .controls, .card, .help {
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    .note { color: var(--muted); max-width: 72ch; }
+    ol.steps { max-width: 72ch; padding-left: 1.2rem; }
+    ol.steps li { margin: 0.35rem 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px 16px;
+      margin: 12px 0;
+    }
+    .card summary { cursor: pointer; font-weight: 650; }
+    .live-grade {
+      display: inline-block;
+      margin: 8px 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--fail);
+      color: var(--fail-ink);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .live-grade.unverified { background: #3f4a57; }
+    .ask { margin: 0.2rem 0 0.6rem; color: var(--muted); }
+    ul.checks { list-style: none; padding: 0; margin: 0 0 10px; }
+    ul.checks li {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 8px;
+      padding: 4px 0;
+      border-top: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .mark { color: var(--hold); font-weight: 700; }
+    .mark.bad { color: var(--fail); }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    td.lbl { font-weight: 650; white-space: nowrap; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+    button, select, input {
+      font: inherit;
+      color: var(--ink);
+      background: var(--chip);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--draft);
+      outline-offset: 2px;
+    }
+    .bench {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .controls { display: grid; gap: 8px; }
+    .controls label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .help h3 { margin-top: 1rem; }
+    .help table { font-size: 0.92rem; }
+    .quiet { color: var(--muted); font-style: italic; }
+    @media (max-width: 800px) {
+      .bench { grid-template-columns: 1fr; }
+      .banner h1 { font-size: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <div class="banner-inner">
+      <p class="kicker">Live Grok Bot · checked 8 Oct 2026</p>
+      <h1>FAIL</h1>
+      <p>A routine blocked by the usage limit is not recorded as “Skipped — usage limit” with its slot and reset time, and it does not catch up after usage returns. Public help, the docs, and the changelog through v0.68.1 do not show that setting or that history row.</p>
+      <p>This page is a draft simulation. It does not clear the fail. Nothing here spends a usage pool.</p>
+    </div>
+  </header>
+  <main>
+    <p class="lede">The draft below is what a catch-up would write in history, and how the queue would behave, if the owner later says to build it. Existing routines stay off. Turning catch-up on starts at the latest skipped run only.</p>
+    <p class="note">Evidence and the per-case grade are in <a href="../RECEIPT.md">RECEIPT.md</a>. The draft help entry is <a href="../drafts/help/catch-up-after-usage-resets.md">Catch up a routine after a usage limit</a>. Primary live pages: <a href="https://cursor.com/help/grok-bot/routines">Routines</a>, <a href="https://docs.x.ai/grok-bot/skills-routines-and-automations">Skills and routines</a>, <a href="https://x.ai/changelog/bot">Changelog</a>, <a href="https://forum.cursor.com/t/all-grok-bots-silent-on-ios-agent-computer-visible-but-no-replies/171458">staff reply, 13 Sep 2026</a>.</p>
+
+    <h2>Repeat it from this page</h2>
+    <ol class="steps">
+      <li>Read the fail banner. That is the live grade. The green words under each case mean the draft simulation held, not that Grok Bot does this.</li>
+      <li>Open each case and read the history label, the slot, and the reset time.</li>
+      <li>On the bench, leave Weekday digest on Off. Record a usage-limit skip, press Weekly reset, then Run queued catch-ups. History keeps the skip and says catch-up is off. The chat stays empty.</li>
+      <li>Set that routine to Latest skipped run only. Record two skips. Weekly reset, then run the queue. One report is titled with the later slot.</li>
+      <li>Set Hourly digest to Each skipped slot and Standup to Latest skipped run only. Record four skips on Hourly digest and one on Standup, then Weekly reset. The plan starts are 90 seconds apart. Run queued catch-ups. One queue, several start times.</li>
+      <li>For the near-fire case, set Next fire to 10 minutes after the reset, record a skip, and release usage. History says superseded by scheduled run.</li>
+      <li>Fire while paused, with the computer down, or with the gate false. Those labels are not “Skipped — usage limit,” and a later reset does not report them.</li>
+      <li>Turn on “Usage closes before the catch-up runs,” release usage, and run the queue. The row says held, and it is not done. Clear that switch, press Plan top-up, and run once more.</li>
+    </ol>
+
+    <section id="cases">
+      <h2>Draft cases</h2>
+      <div class="toolbar">
+        <button type="button" id="expand">Expand all</button>
+        <button type="button" id="collapse">Collapse all</button>
+      </div>
+      <div id="case-list"></div>
+    </section>
+
+    <section id="bench">
+      <h2>Bench</h2>
+      <p class="note">Fixed clock, America/Phoenix. Weekday digest starts with catch-up off, which is the existing-routine default. Dates are October 2026 so a second run matches the first.</p>
+      <div class="bench">
+        <form class="controls card" id="controls">
+          <label>Routine
+            <select id="routine"></select>
+          </label>
+          <label>Catch up after usage resets
+            <select id="mode">
+              <option value="off">Off</option>
+              <option value="latest">Latest skipped run only</option>
+              <option value="each">Each skipped slot (up to 3)</option>
+            </select>
+          </label>
+          <label>Next fire
+            <select id="next-fire">
+              <option value="far">Monday, well after the reset</option>
+              <option value="ten">10 minutes after the reset</option>
+              <option value="fifteen">15 minutes after the reset</option>
+              <option value="outside">Just outside 15 minutes</option>
+            </select>
+          </label>
+          <div class="row-2">
+            <label>Usage now (%)
+              <input id="usage" type="number" min="0" max="100" value="0">
+            </label>
+            <label>Gate: run only under (%)
+              <input id="gate" type="number" min="1" max="100" placeholder="none">
+            </label>
+          </div>
+          <label><input id="close-usage" type="checkbox"> Usage closes before the catch-up runs</label>
+          <label><input id="quiet" type="checkbox"> Stay quiet on NONE</label>
+          <div class="toolbar">
+            <button type="button" id="skip-usage">Record a usage-limit skip</button>
+            <button type="button" id="skip-paused">Fire while paused</button>
+            <button type="button" id="skip-down">Fire while computer is down</button>
+            <button type="button" id="skip-gate">Fire with the gate false</button>
+          </div>
+          <div class="toolbar">
+            <button type="button" id="weekly">Weekly reset</button>
+            <button type="button" id="topup">Plan top-up</button>
+            <button type="button" id="raised">Owner raises the limit</button>
+            <button type="button" id="run">Run queued catch-ups</button>
+          </div>
+          <div class="toolbar">
+            <button type="button" id="pause">Pause</button>
+            <button type="button" id="resume">Resume</button>
+            <button type="button" id="edit">Edit the prompt</button>
+            <button type="button" id="remove">Delete</button>
+            <button type="button" id="reset-bench">Reset the bench</button>
+          </div>
+        </form>
+        <div>
+          <h3>History</h3>
+          <div class="scroll" id="bench-history"></div>
+          <h3>Queue</h3>
+          <div class="scroll" id="bench-plan"></div>
+          <h3>Delivery</h3>
+          <div class="scroll" id="bench-chat"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="help" id="help">
+      <h2>Draft help entry</h2>
+      <p class="note">Not published. Same rules as <a href="../drafts/help/catch-up-after-usage-resets.md">the draft article</a>.</p>
+      <h3>What gets written when the limit blocks a fire</h3>
+      <p>The fire does not run and does not post. History gains <strong>Skipped — usage limit</strong>, the slot in the routine's time zone, and the reset time that was seen. If the signal has no reset time, the row says unknown.</p>
+      <h3>Catch up after usage resets</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Setting</th><th>After usage is available</th></tr></thead>
+          <tbody>
+            <tr><td>Off</td><td>The skip stays in history. The routine waits for its next slot. This is the existing-routine default.</td></tr>
+            <tr><td>Latest skipped run only</td><td>One catch-up, for the newest open usage-limit skip. This is the default when the setting is turned on.</td></tr>
+            <tr><td>Each skipped slot (up to 3)</td><td>One catch-up per open skip, at most 3, newest first.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weekly reset, a plan top-up, or raising the limit can start the queue. The report title is <strong>Catch-up for</strong> the original slot. A stay-quiet-on-NONE instruction stays quiet. A catch-up that should have posted and produced nothing is not marked done.</p>
+      <h3>What does not catch up</h3>
+      <p>Paused, computer down, and owner-gate skips do not enter the queue. A next fire within 15 minutes writes <strong>superseded by scheduled run</strong>. Pause or delete after the skip drops the queued work. An edit runs the current prompt and keeps the original slot on the label. Starts are 90 seconds apart across bots. If the catch-up hits the limit, the same slot is held until a later signal.</p>
+    </section>
+  </main>
+  <script id="engine">
+__ENGINE__
+  </script>
+  <script>
+    const liveByTitle = {
+      "Usage-limit skip leaves a history row": ["FAIL", "Live run history is Running, Succeeded, or Failed."],
+      "Existing routines stay off": ["FAIL", "Live routines have no catch-up setting, so a skip is not replayed."],
+      "Latest skipped run, labeled as that slot": ["FAIL", "Live docs do not show one labeled catch-up after reset."],
+      "Catch-ups are queued, not burst": ["FAIL", "Live docs do not show a stagger queue for these skips."],
+      "A near scheduled fire supersedes the catch-up": ["FAIL", "Live docs do not show superseded by scheduled run."],
+      "Other skip reasons do not catch up": ["FAIL", "Live docs do not show a catch-up filter for pause, gate, or computer."],
+      "The usage gate is judged again at catch-up time": ["FAIL", "Live docs do not show a catch-up start that re-reads the gate."],
+      "A catch-up that hits the limit is not a loop and is not done": ["FAIL", "Live docs do not show a held catch-up or a no-report rule."],
+      "Quiet-on-NONE stays quiet, and the slot name stays": ["FAIL", "Live docs do not show a catch-up title tied to the skipped slot."],
+      "An unknown reset time does not invent a clock": ["UNVERIFIED", "The owner can see a reset time in Settings. This check did not watch the scheduler store it."],
+      "Pause, delete, and edit are read again at catch-up time": ["FAIL", "Live pause and delete cancel waiting runs. They do not define this catch-up."]
+    };
+
+    const FRIDAY = Date.parse("2026-10-09T15:00:00.000Z");
+    const RESET = Date.parse("2026-10-11T07:00:00.000Z");
+    const MONDAY = Date.parse("2026-10-12T15:00:00.000Z");
+
+    function h(value) {
+      return String(value ?? "").replace(/[&<>"]/g, function (ch) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[ch];
+      });
+    }
+
+    function table(headers, rows) {
+      if (!rows.length) return "<p class=\"quiet\">Nothing yet.</p>";
+      const head = "<tr>" + headers.map(function (name) { return "<th>" + h(name) + "</th>"; }).join("") + "</tr>";
+      const body = rows.map(function (row) {
+        return "<tr>" + row.map(function (cell, index) {
+          const cls = index === 2 ? " class=\"lbl\"" : "";
+          return "<td" + cls + ">" + h(cell) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      return "<div class=\"scroll\"><table><thead>" + head + "</thead><tbody>" + body + "</tbody></table></div>";
+    }
+
+    function historyTable(history) {
+      return table(
+        ["When", "Routine", "Label", "Slot", "Reset seen", "Detail"],
+        history.map(function (row) {
+          return [row.atLabel, row.bot + " · " + row.routineName, row.label, row.slotLabel, row.resetLabel, row.detail];
+        })
+      );
+    }
+
+    function renderCases() {
+      const scenarios = CatchUp.demonstrate();
+      const root = document.getElementById("case-list");
+      const broken = scenarios.some(function (scenario) { return !scenario.ok; });
+      root.innerHTML = scenarios.map(function (scenario) {
+        const grade = liveByTitle[scenario.title] || ["FAIL", ""];
+        const checks = scenario.checks.map(function (check) {
+          return "<li><span class=\"mark" + (check.ok ? "" : " bad") + "\">" + (check.ok ? "Holds" : "Broken") + "</span><span>" + h(check.name) + (check.detail ? " — " + h(check.detail) : "") + "</span></li>";
+        }).join("");
+        const plan = table(
+          ["Bot", "Routine", "Slot", "Start", "Signal"],
+          scenario.sim.plan.map(function (row) {
+            return [row.bot, row.routineName, row.slotLabel, row.startLabel, row.reason];
+          })
+        );
+        const chat = table(
+          ["Routine", "Posted", "Title", "Prompt", "Body"],
+          scenario.sim.chat.map(function (row) {
+            return [row.routineName, row.posted ? "Yes" : "No, stayed quiet", row.title, "v" + row.promptVersion, row.body || "—"];
+          })
+        );
+        return "<details class=\"card\"" + (scenario.id === "1" ? " open" : "") + "><summary>" + h(scenario.title) + "</summary>"
+          + "<p class=\"live-grade" + (grade[0] === "UNVERIFIED" ? " unverified" : "") + "\">Live grade: " + h(grade[0]) + "</p>"
+          + "<p class=\"ask\">" + h(grade[1]) + " " + h(scenario.ask) + "</p>"
+          + "<ul class=\"checks\">" + checks + "</ul>"
+          + "<h3>History</h3>" + historyTable(scenario.sim.history)
+          + "<h3>Queue</h3>" + plan
+          + "<h3>Delivery</h3>" + chat
+          + "</details>";
+      }).join("") + (broken ? "<p class=\"live-grade\">Draft simulation broken</p>" : "<p class=\"note\">11 draft scenarios hold. The live banner stays FAIL.</p>");
+    }
+
+    function nextFireAt(mode) {
+      if (mode === "ten") return RESET + 10 * 60 * 1000;
+      if (mode === "fifteen") return RESET + CatchUp.SUPERSEDE_MS;
+      if (mode === "outside") return RESET + CatchUp.SUPERSEDE_MS + 1;
+      return MONDAY;
+    }
+
+    function seedBench() {
+      const sim = CatchUp.createSim(FRIDAY);
+      sim.cursor = RESET;
+      const specs = [
+        ["Weekday digest", "North", "America/Phoenix", "Summarize overnight tickets. If there is nothing to report, stay quiet.", "Four tickets waiting on billing."],
+        ["Hourly digest", "North", "America/Phoenix", "Check the hourly queue.", "Hourly note."],
+        ["Standup", "South", "America/Phoenix", "Post the standup.", "Standup note."]
+      ];
+      specs.forEach(function (spec, index) {
+        CatchUp.addRoutine(sim, {
+          name: spec[0],
+          bot: spec[1],
+          tz: spec[2],
+          catchUp: "off",
+          prompt: spec[3],
+          promptVersion: 1,
+          reportBody: spec[4],
+          outcome: "report",
+          nextFireAt: MONDAY,
+          sampleSlotAt: FRIDAY + index * 15 * 60 * 1000,
+          sampleResetAt: RESET
+        });
+      });
+      return sim;
+    }
+
+    let bench = seedBench();
+
+    function selected() {
+      const id = document.getElementById("routine").value;
+      for (let i = 0; i < bench.routines.length; i++) {
+        if (bench.routines[i].id === id) return bench.routines[i];
+      }
+      return bench.routines[0];
+    }
+
+    function syncControls() {
+      const routine = selected();
+      if (!routine) return;
+      document.getElementById("mode").value = routine.catchUp;
+      document.getElementById("quiet").checked = routine.quietOnNone;
+      document.getElementById("gate").value = routine.gate ? routine.gate.maxPercent : "";
+    }
+
+    function renderBench(preferredId) {
+      const select = document.getElementById("routine");
+      const current = preferredId || select.value;
+      select.innerHTML = bench.routines.map(function (routine) {
+        const flags = [routine.catchUp, routine.paused ? "paused" : "", routine.deleted ? "deleted" : "", routine.computerDown ? "computer down" : ""].filter(Boolean).join(", ");
+        return "<option value=\"" + h(routine.id) + "\">" + h(routine.bot + " · " + routine.name + " (" + flags + ")") + "</option>";
+      }).join("");
+      const hasCurrent = current && Array.prototype.some.call(select.options, function (option) { return option.value === current; });
+      select.value = hasCurrent ? current : (bench.routines[0] ? bench.routines[0].id : "");
+      syncControls();
+      document.getElementById("bench-history").innerHTML = historyTable(bench.history);
+      document.getElementById("bench-plan").innerHTML = table(
+        ["Bot", "Routine", "Slot", "Start", "Signal"],
+        bench.plan.map(function (row) { return [row.bot, row.routineName, row.slotLabel, row.startLabel, row.reason]; })
+      );
+      document.getElementById("bench-chat").innerHTML = table(
+        ["Routine", "Posted", "Title", "Prompt", "Body"],
+        bench.chat.map(function (row) {
+          return [row.routineName, row.posted ? "Yes" : "No, stayed quiet", row.title, "v" + row.promptVersion, row.body || "—"];
+        })
+      );
+    }
+
+    function applyMode() {
+      const routine = selected();
+      const quiet = document.getElementById("quiet").checked;
+      const gateRaw = document.getElementById("gate").value;
+      CatchUp.setRoutine(bench, routine.id, {
+        catchUp: document.getElementById("mode").value,
+        nextFireAt: nextFireAt(document.getElementById("next-fire").value),
+        quietOnNone: quiet,
+        outcome: quiet ? "none" : "report",
+        gate: gateRaw === "" ? null : { maxPercent: Number(gateRaw) },
+        computerDown: false
+      });
+    }
+
+    function record(kind) {
+      if (kind === "gate" && document.getElementById("gate").value === "") {
+        document.getElementById("gate").value = "40";
+      }
+      if (kind === "gate") {
+        const max = Number(document.getElementById("gate").value);
+        const usage = Math.max(Number(document.getElementById("usage").value || 0), max);
+        document.getElementById("usage").value = String(usage);
+      }
+      applyMode();
+      const routine = selected();
+      if (routine.deleted) return;
+      const patch = {};
+      if (kind === "paused") patch.paused = true;
+      if (kind === "down") patch.computerDown = true;
+      CatchUp.setRoutine(bench, routine.id, patch);
+      const usage = Number(document.getElementById("usage").value || 0);
+      CatchUp.fire(bench, {
+        routineId: routine.id,
+        slotAt: routine.sampleSlotAt,
+        at: routine.sampleSlotAt,
+        usageBlocked: kind === "usage",
+        usagePercent: kind === "gate" ? Math.max(usage, routine.gate ? routine.gate.maxPercent : 80) : usage,
+        resetAt: routine.sampleResetAt
+      });
+      CatchUp.setRoutine(bench, routine.id, { sampleSlotAt: routine.sampleSlotAt + 60 * 60 * 1000 });
+      renderBench();
+    }
+
+    function release(reason) {
+      applyMode();
+      const at = bench.cursor;
+      bench.cursor = at + 60 * 1000;
+      bench.usagePercent = Number(document.getElementById("usage").value || 0);
+      CatchUp.onUsageAvailable(bench, { at: at, reason: reason, usagePercent: bench.usagePercent });
+      if (document.getElementById("close-usage").checked) bench.usageOpen = false;
+      renderBench();
+    }
+
+    document.getElementById("controls").addEventListener("submit", function (event) { event.preventDefault(); });
+    document.getElementById("routine").addEventListener("change", syncControls);
+    document.getElementById("mode").addEventListener("change", function () { applyMode(); renderBench(); });
+    document.getElementById("skip-usage").addEventListener("click", function () { record("usage"); });
+    document.getElementById("skip-paused").addEventListener("click", function () { record("paused"); });
+    document.getElementById("skip-down").addEventListener("click", function () { record("down"); });
+    document.getElementById("skip-gate").addEventListener("click", function () { record("gate"); });
+    document.getElementById("weekly").addEventListener("click", function () { release("weekly_reset"); });
+    document.getElementById("topup").addEventListener("click", function () { release("plan_top_up"); });
+    document.getElementById("raised").addEventListener("click", function () { release("owner_raised_limit"); });
+    document.getElementById("run").addEventListener("click", function () {
+      applyMode();
+      if (document.getElementById("close-usage").checked) bench.usageOpen = false;
+      else bench.usageOpen = true;
+      bench.usagePercent = Number(document.getElementById("usage").value || 0);
+      CatchUp.runDue(bench, bench.now + 10 * CatchUp.STAGGER_MS + 60 * 60 * 1000);
+      renderBench();
+    });
+    document.getElementById("pause").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { paused: true });
+      renderBench();
+    });
+    document.getElementById("resume").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { paused: false, computerDown: false });
+      renderBench();
+    });
+    document.getElementById("edit").addEventListener("click", function () {
+      const routine = selected();
+      CatchUp.setRoutine(bench, routine.id, {
+        promptVersion: routine.promptVersion + 1,
+        prompt: routine.prompt + " Edited.",
+        reportBody: "Report from prompt v" + (routine.promptVersion + 1) + "."
+      });
+      renderBench();
+    });
+    document.getElementById("remove").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { deleted: true });
+      renderBench();
+    });
+    document.getElementById("reset-bench").addEventListener("click", function () {
+      bench = seedBench();
+      document.getElementById("usage").value = "0";
+      document.getElementById("gate").value = "";
+      document.getElementById("close-usage").checked = false;
+      document.getElementById("quiet").checked = false;
+      document.getElementById("next-fire").value = "far";
+      renderBench(bench.routines[0].id);
+    });
+    document.getElementById("expand").addEventListener("click", function () {
+      document.querySelectorAll("#case-list details").forEach(function (el) { el.open = true; });
+    });
+    document.getElementById("collapse").addEventListener("click", function () {
+      document.querySelectorAll("#case-list details").forEach(function (el) { el.open = false; });
+    });
+
+    renderCases();
+    renderBench();
+  </script>
+</body>
+</html>

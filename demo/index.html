@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usage-limit skip catch-up — live grade FAIL</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%238c1c1c' width='16' height='16'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --paper: #f4efe4;
+      --ink: #1d1914;
+      --muted: #5e564c;
+      --line: #ddcfb8;
+      --fail: #8c1c1c;
+      --fail-ink: #fff6f1;
+      --draft: #8a5310;
+      --chip: #efe6d4;
+      --card: #fffaf2;
+      --hold: #245c45;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.45;
+    }
+    .banner {
+      background: var(--fail);
+      color: var(--fail-ink);
+      padding: 28px 20px 32px;
+    }
+    .banner-inner, main { max-width: 1080px; margin: 0 auto; }
+    .kicker {
+      margin: 0 0 8px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    .banner h1 {
+      margin: 0;
+      font-size: clamp(72px, 14vw, 120px);
+      line-height: 0.8;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+    .banner p { max-width: 68ch; font-size: 1.12rem; }
+    .banner a { color: inherit; }
+    main { padding: 28px 20px 64px; }
+    h2 { font-size: 1.7rem; line-height: 1.15; margin: 2rem 0 0.4rem; }
+    h3 { font-size: 1.15rem; margin: 0 0 0.3rem; }
+    a { color: var(--draft); }
+    .lede { font-size: 1.08rem; max-width: 70ch; }
+    .note, .live-grade, .check, .controls, .card, .help {
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+    .note { color: var(--muted); max-width: 72ch; }
+    ol.steps { max-width: 72ch; padding-left: 1.2rem; }
+    ol.steps li { margin: 0.35rem 0; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px 16px;
+      margin: 12px 0;
+    }
+    .card summary { cursor: pointer; font-weight: 650; }
+    .live-grade {
+      display: inline-block;
+      margin: 8px 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--fail);
+      color: var(--fail-ink);
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .live-grade.unverified { background: #3f4a57; }
+    .ask { margin: 0.2rem 0 0.6rem; color: var(--muted); }
+    ul.checks { list-style: none; padding: 0; margin: 0 0 10px; }
+    ul.checks li {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 8px;
+      padding: 4px 0;
+      border-top: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+    .mark { color: var(--hold); font-weight: 700; }
+    .mark.bad { color: var(--fail); }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    td.lbl { font-weight: 650; white-space: nowrap; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+    button, select, input {
+      font: inherit;
+      color: var(--ink);
+      background: var(--chip);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible, summary:focus-visible {
+      outline: 2px solid var(--draft);
+      outline-offset: 2px;
+    }
+    .bench {
+      display: grid;
+      grid-template-columns: minmax(240px, 320px) 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+    .controls { display: grid; gap: 8px; }
+    .controls label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .help h3 { margin-top: 1rem; }
+    .help table { font-size: 0.92rem; }
+    .quiet { color: var(--muted); font-style: italic; }
+    @media (max-width: 800px) {
+      .bench { grid-template-columns: 1fr; }
+      .banner h1 { font-size: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="banner">
+    <div class="banner-inner">
+      <p class="kicker">Live Grok Bot · checked 8 Oct 2026</p>
+      <h1>FAIL</h1>
+      <p>A routine blocked by the usage limit is not recorded as “Skipped — usage limit” with its slot and reset time, and it does not catch up after usage returns. Public help, the docs, and the changelog through v0.68.1 do not show that setting or that history row.</p>
+      <p>This page is a draft simulation. It does not clear the fail. Nothing here spends a usage pool.</p>
+    </div>
+  </header>
+  <main>
+    <p class="lede">The draft below is what a catch-up would write in history, and how the queue would behave, if the owner later says to build it. Existing routines stay off. Turning catch-up on starts at the latest skipped run only.</p>
+    <p class="note">Evidence and the per-case grade are in <a href="../RECEIPT.md">RECEIPT.md</a>. The draft help entry is <a href="../drafts/help/catch-up-after-usage-resets.md">Catch up a routine after a usage limit</a>. Primary live pages: <a href="https://cursor.com/help/grok-bot/routines">Routines</a>, <a href="https://docs.x.ai/grok-bot/skills-routines-and-automations">Skills and routines</a>, <a href="https://x.ai/changelog/bot">Changelog</a>, <a href="https://forum.cursor.com/t/all-grok-bots-silent-on-ios-agent-computer-visible-but-no-replies/171458">staff reply, 13 Sep 2026</a>.</p>
+
+    <h2>Repeat it from this page</h2>
+    <ol class="steps">
+      <li>Read the fail banner. That is the live grade. The green words under each case mean the draft simulation held, not that Grok Bot does this.</li>
+      <li>Open each case and read the history label, the slot, and the reset time.</li>
+      <li>On the bench, leave Weekday digest on Off. Record a usage-limit skip, press Weekly reset, then Run queued catch-ups. History keeps the skip and says catch-up is off. The chat stays empty.</li>
+      <li>Set that routine to Latest skipped run only. Record two skips. Weekly reset, then run the queue. One report is titled with the later slot.</li>
+      <li>Set Hourly digest to Each skipped slot and Standup to Latest skipped run only. Record four skips on Hourly digest and one on Standup, then Weekly reset. The plan starts are 90 seconds apart. Run queued catch-ups. One queue, several start times.</li>
+      <li>For the near-fire case, set Next fire to 10 minutes after the reset, record a skip, and release usage. History says superseded by scheduled run.</li>
+      <li>Fire while paused, with the computer down, or with the gate false. Those labels are not “Skipped — usage limit,” and a later reset does not report them.</li>
+      <li>Turn on “Usage closes before the catch-up runs,” release usage, and run the queue. The row says held, and it is not done. Clear that switch, press Plan top-up, and run once more.</li>
+    </ol>
+
+    <section id="cases">
+      <h2>Draft cases</h2>
+      <div class="toolbar">
+        <button type="button" id="expand">Expand all</button>
+        <button type="button" id="collapse">Collapse all</button>
+      </div>
+      <div id="case-list"></div>
+    </section>
+
+    <section id="bench">
+      <h2>Bench</h2>
+      <p class="note">Fixed clock, America/Phoenix. Weekday digest starts with catch-up off, which is the existing-routine default. Dates are October 2026 so a second run matches the first.</p>
+      <div class="bench">
+        <form class="controls card" id="controls">
+          <label>Routine
+            <select id="routine"></select>
+          </label>
+          <label>Catch up after usage resets
+            <select id="mode">
+              <option value="off">Off</option>
+              <option value="latest">Latest skipped run only</option>
+              <option value="each">Each skipped slot (up to 3)</option>
+            </select>
+          </label>
+          <label>Next fire
+            <select id="next-fire">
+              <option value="far">Monday, well after the reset</option>
+              <option value="ten">10 minutes after the reset</option>
+              <option value="fifteen">15 minutes after the reset</option>
+              <option value="outside">Just outside 15 minutes</option>
+            </select>
+          </label>
+          <div class="row-2">
+            <label>Usage now (%)
+              <input id="usage" type="number" min="0" max="100" value="0">
+            </label>
+            <label>Gate: run only under (%)
+              <input id="gate" type="number" min="1" max="100" placeholder="none">
+            </label>
+          </div>
+          <label><input id="close-usage" type="checkbox"> Usage closes before the catch-up runs</label>
+          <label><input id="quiet" type="checkbox"> Stay quiet on NONE</label>
+          <div class="toolbar">
+            <button type="button" id="skip-usage">Record a usage-limit skip</button>
+            <button type="button" id="skip-paused">Fire while paused</button>
+            <button type="button" id="skip-down">Fire while computer is down</button>
+            <button type="button" id="skip-gate">Fire with the gate false</button>
+          </div>
+          <div class="toolbar">
+            <button type="button" id="weekly">Weekly reset</button>
+            <button type="button" id="topup">Plan top-up</button>
+            <button type="button" id="raised">Owner raises the limit</button>
+            <button type="button" id="run">Run queued catch-ups</button>
+          </div>
+          <div class="toolbar">
+            <button type="button" id="pause">Pause</button>
+            <button type="button" id="resume">Resume</button>
+            <button type="button" id="edit">Edit the prompt</button>
+            <button type="button" id="remove">Delete</button>
+            <button type="button" id="reset-bench">Reset the bench</button>
+          </div>
+        </form>
+        <div>
+          <h3>History</h3>
+          <div class="scroll" id="bench-history"></div>
+          <h3>Queue</h3>
+          <div class="scroll" id="bench-plan"></div>
+          <h3>Delivery</h3>
+          <div class="scroll" id="bench-chat"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="help" id="help">
+      <h2>Draft help entry</h2>
+      <p class="note">Not published. Same rules as <a href="../drafts/help/catch-up-after-usage-resets.md">the draft article</a>.</p>
+      <h3>What gets written when the limit blocks a fire</h3>
+      <p>The fire does not run and does not post. History gains <strong>Skipped — usage limit</strong>, the slot in the routine's time zone, and the reset time that was seen. If the signal has no reset time, the row says unknown.</p>
+      <h3>Catch up after usage resets</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Setting</th><th>After usage is available</th></tr></thead>
+          <tbody>
+            <tr><td>Off</td><td>The skip stays in history. The routine waits for its next slot. This is the existing-routine default.</td></tr>
+            <tr><td>Latest skipped run only</td><td>One catch-up, for the newest open usage-limit skip. This is the default when the setting is turned on.</td></tr>
+            <tr><td>Each skipped slot (up to 3)</td><td>One catch-up per open skip, at most 3, newest first.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Weekly reset, a plan top-up, or raising the limit can start the queue. The report title is <strong>Catch-up for</strong> the original slot. A stay-quiet-on-NONE instruction stays quiet. A catch-up that should have posted and produced nothing is not marked done.</p>
+      <h3>What does not catch up</h3>
+      <p>Paused, computer down, and owner-gate skips do not enter the queue. A next fire within 15 minutes writes <strong>superseded by scheduled run</strong>. Pause or delete after the skip drops the queued work. An edit runs the current prompt and keeps the original slot on the label. Starts are 90 seconds apart across bots. If the catch-up hits the limit, the same slot is held until a later signal.</p>
+    </section>
+  </main>
+  <script id="engine">
+/**
+ * Draft reference for usage-limit skip catch-up.
+ * This is a simulation of a policy. It is not wired to Grok Bot.
+ * Existing routines default to catch-up off.
+ */
+(function (root) {
+  var EACH_CAP = 3;
+  var SUPERSEDE_MS = 15 * 60 * 1000;
+  var STAGGER_MS = 90 * 1000;
+  var OPERATOR_TZ = "America/Phoenix";
+
+  function formatSlot(epochMs, timeZone, withSeconds) {
+    var options = {
+      timeZone: timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    };
+    if (withSeconds) options.second = "2-digit";
+    var parts = new Intl.DateTimeFormat("en-US", options).formatToParts(new Date(epochMs));
+    var bag = {};
+    for (var i = 0; i < parts.length; i++) bag[parts[i].type] = parts[i].value;
+    var hour = bag.hour === "24" ? "00" : String(bag.hour).padStart(2, "0");
+    var second = withSeconds ? ":" + String(bag.second).padStart(2, "0") : "";
+    return bag.year + "-" + bag.month + "-" + bag.day + " " + hour + ":" + bag.minute + second + " " + timeZone;
+  }
+
+  function formatReset(epochMs, timeZone) {
+    if (epochMs == null) return "unknown";
+    return formatSlot(epochMs, timeZone);
+  }
+
+  function createSim(now) {
+    return {
+      now: now,
+      usageOpen: true,
+      usagePercent: 0,
+      routines: [],
+      skips: [],
+      history: [],
+      reports: [],
+      chat: [],
+      queue: [],
+      plan: [],
+      seq: 1,
+    };
+  }
+
+  function nextId(state) {
+    var id = "id-" + state.seq;
+    state.seq += 1;
+    return id;
+  }
+
+  function getRoutine(state, routineId) {
+    for (var i = 0; i < state.routines.length; i++) {
+      if (state.routines[i].id === routineId) return state.routines[i];
+    }
+    throw new Error("Unknown routine " + routineId);
+  }
+
+  function addRoutine(state, spec) {
+    var routine = {
+      id: spec.id || nextId(state),
+      name: spec.name,
+      bot: spec.bot,
+      tz: spec.tz,
+      catchUp: spec.catchUp || "off",
+      quietOnNone: !!spec.quietOnNone,
+      paused: !!spec.paused,
+      deleted: !!spec.deleted,
+      computerDown: !!spec.computerDown,
+      gate: spec.gate || null,
+      prompt: spec.prompt || "",
+      promptVersion: spec.promptVersion == null ? 1 : spec.promptVersion,
+      outcome: spec.outcome || "report",
+      reportBody: spec.reportBody || "",
+      nextFireAt: spec.nextFireAt == null ? null : spec.nextFireAt,
+      sampleSlotAt: spec.sampleSlotAt,
+      sampleResetAt: spec.sampleResetAt == null ? null : spec.sampleResetAt,
+    };
+    state.routines.push(routine);
+    return routine;
+  }
+
+  function setRoutine(state, routineId, patch) {
+    var routine = getRoutine(state, routineId);
+    var keys = Object.keys(patch);
+    for (var i = 0; i < keys.length; i++) routine[keys[i]] = patch[keys[i]];
+    return routine;
+  }
+
+  function pushHistory(state, routine, at, label, slotLabel, resetLabel, detail) {
+    state.history.push({
+      at: at,
+      atLabel: formatSlot(at, OPERATOR_TZ),
+      routineId: routine.id,
+      routineName: routine.name,
+      bot: routine.bot,
+      label: label,
+      slotLabel: slotLabel || "",
+      resetLabel: resetLabel || "",
+      detail: detail || "",
+    });
+  }
+
+  function rememberSkip(state, routine, args, cause, label) {
+    var slotLabel = formatSlot(args.slotAt, routine.tz);
+    var resetLabel = cause === "usage_limit" ? formatReset(args.resetAt, routine.tz) : "";
+    var skip = {
+      id: nextId(state),
+      routineId: routine.id,
+      slotAt: args.slotAt,
+      slotLabel: slotLabel,
+      resetAt: cause === "usage_limit" ? (args.resetAt == null ? null : args.resetAt) : null,
+      resetLabel: resetLabel,
+      cause: cause,
+      status: cause === "usage_limit" ? "open" : "ineligible",
+      attempts: 0,
+    };
+    state.skips.push(skip);
+    var detail = "";
+    if (cause === "usage_limit") {
+      detail = args.resetAt == null
+        ? "Reset time was not on the limit signal. Catch-up waits for an availability signal."
+        : "Slot recorded in " + routine.tz + ".";
+      if (routine.catchUp === "off") detail += " Catch-up is off.";
+    } else {
+      detail = "Not a usage-limit skip. No catch-up.";
+    }
+    pushHistory(state, routine, args.at == null ? args.slotAt : args.at, label, slotLabel, resetLabel, detail);
+    return skip;
+  }
+
+  function fire(state, args) {
+    var routine = getRoutine(state, args.routineId);
+    if (routine.deleted) return null;
+    if (routine.paused) return rememberSkip(state, routine, args, "paused", "Skipped — paused");
+    if (routine.computerDown) return rememberSkip(state, routine, args, "computer_down", "Skipped — computer down");
+    if (args.usageBlocked) return rememberSkip(state, routine, args, "usage_limit", "Skipped — usage limit");
+    var percent = args.usagePercent == null ? state.usagePercent : args.usagePercent;
+    if (routine.gate && percent >= routine.gate.maxPercent) {
+      return rememberSkip(state, routine, args, "owner_gate", "Skipped — owner gate false");
+    }
+    return null;
+  }
+
+  function reasonPhrase(reason) {
+    if (reason === "weekly_reset") return "weekly reset";
+    if (reason === "plan_top_up") return "plan top-up";
+    if (reason === "owner_raised_limit") return "owner raised the limit";
+    return reason;
+  }
+
+  function onUsageAvailable(state, args) {
+    state.now = args.at;
+    state.usageOpen = true;
+    if (args.usagePercent != null) state.usagePercent = args.usagePercent;
+    state.queue = state.queue.filter(function (skip) { return skip.status === "queued"; });
+    var phrase = reasonPhrase(args.reason);
+    var pending = [];
+    for (var i = 0; i < state.skips.length; i++) {
+      var skip = state.skips[i];
+      if (skip.cause !== "usage_limit") continue;
+      if (skip.status !== "open" && skip.status !== "held") continue;
+      pending.push(skip);
+    }
+    var byRoutine = {};
+    for (var p = 0; p < pending.length; p++) {
+      var key = pending[p].routineId;
+      if (!byRoutine[key]) byRoutine[key] = [];
+      byRoutine[key].push(pending[p]);
+    }
+    var chosen = [];
+    var routineIds = Object.keys(byRoutine);
+    for (var r = 0; r < routineIds.length; r++) {
+      var routine = getRoutine(state, routineIds[r]);
+      var group = byRoutine[routine.id].slice().sort(function (a, b) { return b.slotAt - a.slotAt; });
+      if (routine.deleted) {
+        closeGroup(state, routine, group, args.at, "dropped", "Dropped — routine deleted", "The routine was deleted before catch-up.");
+        continue;
+      }
+      if (routine.paused) {
+        closeGroup(state, routine, group, args.at, "dropped", "Dropped — routine paused", "The routine was paused before catch-up.");
+        continue;
+      }
+      if (routine.catchUp === "off") {
+        closeGroup(state, routine, group, args.at, "waived", "Not queued — catch-up off", "The skip stays in history. This availability does not run it.");
+        continue;
+      }
+      if (routine.nextFireAt != null && routine.nextFireAt >= args.at && routine.nextFireAt <= args.at + SUPERSEDE_MS) {
+        var nextLabel = formatSlot(routine.nextFireAt, routine.tz);
+        closeGroup(
+          state,
+          routine,
+          group,
+          args.at,
+          "superseded",
+          "superseded by scheduled run",
+          "Next fire " + nextLabel + " is before or within 15 minutes of " + phrase + "."
+        );
+        continue;
+      }
+      var keep = routine.catchUp === "latest" ? group.slice(0, 1) : group.slice(0, EACH_CAP);
+      var drop = routine.catchUp === "latest" ? group.slice(1) : group.slice(EACH_CAP);
+      var dropLabel = routine.catchUp === "latest"
+        ? "Dropped — latest skipped run only"
+        : "Dropped — cap of " + EACH_CAP + " skipped slots";
+      closeGroup(state, routine, drop, args.at, "dropped", dropLabel, "Older usage-limit skips stay in history and do not run.");
+      for (var k = 0; k < keep.length; k++) chosen.push(keep[k]);
+    }
+    chosen.sort(function (a, b) {
+      if (a.slotAt !== b.slotAt) return a.slotAt - b.slotAt;
+      var ra = getRoutine(state, a.routineId);
+      var rb = getRoutine(state, b.routineId);
+      if (ra.bot !== rb.bot) return ra.bot < rb.bot ? -1 : 1;
+      if (ra.name !== rb.name) return ra.name < rb.name ? -1 : 1;
+      return a.id < b.id ? -1 : 1;
+    });
+    var lastStart = null;
+    for (var q = 0; q < state.queue.length; q++) {
+      if (state.queue[q].status === "queued" && (lastStart == null || state.queue[q].startAt > lastStart)) {
+        lastStart = state.queue[q].startAt;
+      }
+    }
+    for (var c = 0; c < chosen.length; c++) {
+      var item = chosen[c];
+      item.status = "queued";
+      item.startAt = lastStart == null ? args.at + c * STAGGER_MS : lastStart + (c + 1) * STAGGER_MS;
+      item.availabilityReason = args.reason;
+      state.queue.push(item);
+      var owner = getRoutine(state, item.routineId);
+      state.plan.push({
+        skipId: item.id,
+        routineId: owner.id,
+        routineName: owner.name,
+        bot: owner.bot,
+        slotLabel: item.slotLabel,
+        startAt: item.startAt,
+        startLabel: formatSlot(item.startAt, OPERATOR_TZ, true),
+        reason: phrase,
+      });
+    }
+  }
+
+  function closeGroup(state, routine, group, at, status, label, detail) {
+    for (var i = 0; i < group.length; i++) {
+      group[i].status = status;
+      pushHistory(state, routine, at, label, group[i].slotLabel, group[i].resetLabel, detail);
+    }
+  }
+
+  function executeCatchUp(state, skip) {
+    if (skip.status !== "queued") return;
+    var routine = getRoutine(state, skip.routineId);
+    var at = skip.startAt;
+    var phrase = reasonPhrase(skip.availabilityReason);
+    if (routine.deleted) {
+      skip.status = "dropped";
+      pushHistory(state, routine, at, "Dropped — routine deleted", skip.slotLabel, skip.resetLabel, "Checked again at catch-up time. The saved prompt was not run.");
+      return;
+    }
+    if (routine.paused) {
+      skip.status = "dropped";
+      pushHistory(state, routine, at, "Dropped — routine paused", skip.slotLabel, skip.resetLabel, "Checked again at catch-up time.");
+      return;
+    }
+    if (routine.catchUp === "off") {
+      skip.status = "dropped";
+      pushHistory(state, routine, at, "Dropped — catch-up turned off", skip.slotLabel, skip.resetLabel, "The owner turned catch-up off before this start.");
+      return;
+    }
+    if (routine.computerDown) {
+      skip.status = "held";
+      pushHistory(state, routine, at, "Not run — computer unavailable", skip.slotLabel, skip.resetLabel, "Held for a later availability signal. Not marked done. Not run again in this wave.");
+      return;
+    }
+    if (routine.gate && state.usagePercent >= routine.gate.maxPercent) {
+      skip.status = "dropped";
+      pushHistory(
+        state,
+        routine,
+        at,
+        "Not run — owner gate false",
+        skip.slotLabel,
+        skip.resetLabel,
+        "At catch-up time usage is " + state.usagePercent + "%. The gate allows a run only under " + routine.gate.maxPercent + "%."
+      );
+      return;
+    }
+    if (!state.usageOpen) {
+      skip.status = "held";
+      skip.attempts += 1;
+      pushHistory(
+        state,
+        routine,
+        at,
+        "Catch-up held — usage limit",
+        skip.slotLabel,
+        skip.resetLabel,
+        "Same slot stays open. Not marked done. Not re-queued until usage is available again."
+      );
+      return;
+    }
+    var title = "Catch-up for " + skip.slotLabel;
+    if (routine.outcome === "none" && routine.quietOnNone) {
+      skip.status = "done";
+      pushHistory(state, routine, at, title, skip.slotLabel, skip.resetLabel, "Stayed quiet on NONE. After " + phrase + ". Prompt v" + routine.promptVersion + ".");
+      state.chat.push({
+        at: at,
+        routineId: routine.id,
+        routineName: routine.name,
+        posted: false,
+        title: title,
+        body: "",
+        slotLabel: skip.slotLabel,
+        promptVersion: routine.promptVersion,
+      });
+      return;
+    }
+    if (routine.outcome === "none" || routine.outcome === "missing") {
+      skip.status = "held";
+      skip.attempts += 1;
+      pushHistory(
+        state,
+        routine,
+        at,
+        "Catch-up incomplete — no report",
+        skip.slotLabel,
+        skip.resetLabel,
+        "The report path produced nothing. Not marked done. Not re-queued in this wave."
+      );
+      return;
+    }
+    skip.status = "done";
+    var report = {
+      at: at,
+      routineId: routine.id,
+      routineName: routine.name,
+      bot: routine.bot,
+      title: title,
+      slotLabel: skip.slotLabel,
+      promptVersion: routine.promptVersion,
+      prompt: routine.prompt,
+      body: routine.reportBody,
+      reason: phrase,
+    };
+    state.reports.push(report);
+    state.chat.push({
+      at: at,
+      routineId: routine.id,
+      routineName: routine.name,
+      posted: true,
+      title: title,
+      body: routine.reportBody,
+      slotLabel: skip.slotLabel,
+      promptVersion: routine.promptVersion,
+    });
+    pushHistory(state, routine, at, title, skip.slotLabel, skip.resetLabel, "Delivered on the normal report path after " + phrase + ". Prompt v" + routine.promptVersion + ".");
+  }
+
+  function runDue(state, until) {
+    var due = [];
+    var seen = {};
+    for (var i = 0; i < state.queue.length; i++) {
+      var skip = state.queue[i];
+      if (seen[skip.id]) continue;
+      if (skip.status === "queued" && skip.startAt <= until) {
+        seen[skip.id] = true;
+        due.push(skip);
+      }
+    }
+    due.sort(function (a, b) { return a.startAt - b.startAt; });
+    for (var d = 0; d < due.length; d++) {
+      state.now = due[d].startAt;
+      executeCatchUp(state, due[d]);
+    }
+    if (until > state.now) state.now = until;
+  }
+
+  function historyLabels(sim) {
+    return sim.history.map(function (row) { return row.label; });
+  }
+
+  function countLabel(sim, label) {
+    var n = 0;
+    for (var i = 0; i < sim.history.length; i++) if (sim.history[i].label === label) n += 1;
+    return n;
+  }
+
+  function hasLabel(sim, label) {
+    return countLabel(sim, label) > 0;
+  }
+
+  function friday() { return Date.parse("2026-10-09T15:00:00.000Z"); }
+  function hour(n) { return friday() + n * 60 * 60 * 1000; }
+  function sundayReset() { return Date.parse("2026-10-11T07:00:00.000Z"); }
+
+  function check(sc, ok, name, detail) {
+    sc.checks.push({ ok: !!ok, name: name, detail: detail || "" });
+  }
+
+  function scenarioShell(id, title, ask) {
+    return { id: id, title: title, ask: ask, checks: [], sim: null };
+  }
+
+  function finish(sc, sim) {
+    sc.sim = {
+      history: sim.history,
+      reports: sim.reports,
+      chat: sim.chat,
+      plan: sim.plan,
+      skips: sim.skips.map(function (s) {
+        return { status: s.status, slotLabel: s.slotLabel, cause: s.cause, resetLabel: s.resetLabel, routineId: s.routineId };
+      }),
+    };
+    sc.ok = sc.checks.every(function (c) { return c.ok; });
+    return sc;
+  }
+
+  function scenarioTrace() {
+    var sc = scenarioShell("1", "Usage-limit skip leaves a history row", "A blocked fire records the slot and the reset time that was seen.");
+    var sim = createSim(friday());
+    var digest = addRoutine(sim, {
+      name: "Weekday digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Summarize overnight tickets. If there is nothing to report, stay quiet.",
+      reportBody: "Four tickets, one waiting on billing.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    fire(sim, { routineId: digest.id, slotAt: friday(), at: friday(), usageBlocked: true, resetAt: sundayReset() });
+    var row = sim.history[0];
+    check(sc, row && row.label === "Skipped — usage limit", "History label is Skipped — usage limit", row && row.label);
+    check(sc, row && row.slotLabel === "2026-10-09 08:00 America/Phoenix", "Slot is the local date and minute in the routine time zone", row && row.slotLabel);
+    check(sc, row && row.resetLabel === "2026-10-11 00:00 America/Phoenix", "Reset time seen is stored on the row", row && row.resetLabel);
+    check(sc, sim.reports.length === 0 && sim.chat.length === 0, "The blocked fire does not deliver a report", "");
+    return finish(sc, sim);
+  }
+
+  function scenarioDefaultOff() {
+    var sc = scenarioShell("2", "Existing routines stay off", "After usage returns, a routine with catch-up off waits for its next slot.");
+    var sim = createSim(friday());
+    var digest = addRoutine(sim, {
+      name: "Existing weekday digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      prompt: "Summarize overnight tickets.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    fire(sim, { routineId: digest.id, slotAt: friday(), usageBlocked: true, resetAt: sundayReset() });
+    onUsageAvailable(sim, { at: sundayReset(), reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, sundayReset() + 10 * STAGGER_MS);
+    check(sc, hasLabel(sim, "Skipped — usage limit"), "The skip remains in history", "");
+    check(sc, hasLabel(sim, "Not queued — catch-up off"), "Availability does not queue it", "");
+    check(sc, sim.reports.length === 0 && sim.plan.length === 0, "No catch-up report is delivered", "");
+    return finish(sc, sim);
+  }
+
+  function scenarioLatest() {
+    var sc = scenarioShell("2", "Latest skipped run, labeled as that slot", "With catch-up on, the default mode runs the latest skipped slot once and names that slot.");
+    var sim = createSim(friday());
+    var monday = Date.parse("2026-10-12T15:00:00.000Z");
+    var digest = addRoutine(sim, {
+      name: "Weekday digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Summarize overnight tickets.",
+      promptVersion: 1,
+      reportBody: "Saturday queue: four tickets.",
+      nextFireAt: monday,
+    });
+    fire(sim, { routineId: digest.id, slotAt: friday(), usageBlocked: true, resetAt: sundayReset() });
+    fire(sim, { routineId: digest.id, slotAt: friday() + 24 * 60 * 60 * 1000, usageBlocked: true, resetAt: sundayReset() });
+    onUsageAvailable(sim, { at: sundayReset(), reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, sundayReset() + 10 * STAGGER_MS);
+    var report = sim.reports[0];
+    check(sc, countLabel(sim, "Skipped — usage limit") === 2, "Both blocked slots are in history", "");
+    check(sc, hasLabel(sim, "Dropped — latest skipped run only"), "The older slot is not replayed", "");
+    check(sc, sim.reports.length === 1, "Exactly one catch-up report", String(sim.reports.length));
+    check(sc, report && report.title === "Catch-up for 2026-10-10 08:00 America/Phoenix", "The report is labeled with the skipped slot", report && report.title);
+    check(sc, report && report.title.indexOf("2026-10-12") === -1, "The report is not labeled as Monday's slot", report && report.title);
+    check(sc, report && report.reason === "weekly reset", "The trigger recorded here is the weekly reset", report && report.reason);
+    return finish(sc, sim);
+  }
+
+  function scenarioStagger() {
+    var sc = scenarioShell("3", "Catch-ups are queued, not burst", "Skipped slots across bots take staggered starts, and each-slot mode keeps a cap.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var north = addRoutine(sim, {
+      name: "Hourly digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "each",
+      prompt: "Check the hourly queue.",
+      reportBody: "Hourly note.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var south = addRoutine(sim, {
+      name: "Standup",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Post the standup.",
+      reportBody: "Standup note.",
+      nextFireAt: Date.parse("2026-10-12T16:00:00.000Z"),
+    });
+    var east = addRoutine(sim, {
+      name: "Alerts",
+      bot: "East",
+      tz: "America/New_York",
+      catchUp: "each",
+      prompt: "List new alerts.",
+      reportBody: "Alert note.",
+      nextFireAt: Date.parse("2026-10-12T14:00:00.000Z"),
+    });
+    fire(sim, { routineId: north.id, slotAt: hour(0), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: north.id, slotAt: hour(1), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: north.id, slotAt: hour(2), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: north.id, slotAt: hour(3), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: south.id, slotAt: hour(0) + 15 * 60 * 1000, usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: east.id, slotAt: hour(0) + 30 * 60 * 1000, usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    var starts = sim.plan.map(function (row) { return row.startAt; }).sort(function (a, b) { return a - b; });
+    var spaced = starts.length >= 2;
+    for (var i = 1; i < starts.length; i++) if (starts[i] - starts[i - 1] !== STAGGER_MS) spaced = false;
+    var unique = {};
+    for (var u = 0; u < starts.length; u++) unique[starts[u]] = true;
+    runDue(sim, reset);
+    var startedImmediately = sim.reports.length;
+    runDue(sim, reset + 10 * STAGGER_MS);
+    check(sc, hasLabel(sim, "Dropped — cap of 3 skipped slots"), "Each-slot mode drops slots past the cap of 3", "");
+    check(sc, sim.plan.length === 5, "Five catch-ups are queued across three bots", String(sim.plan.length));
+    check(sc, spaced && Object.keys(unique).length === starts.length, "Starts are 90 seconds apart", sim.plan.map(function (row) { return row.startLabel; }).join(" · "));
+    check(sc, sim.plan.length > 1 && sim.plan[1].startLabel.indexOf(":30 ") !== -1, "Start labels include seconds, so the 90-second gap is visible", sim.plan[1] && sim.plan[1].startLabel);
+    check(sc, startedImmediately === 1, "The first moment runs one catch-up", String(startedImmediately));
+    check(sc, sim.reports.length === 5, "The rest run on their own starts, still one report each", String(sim.reports.length));
+    var bots = {};
+    for (var b = 0; b < sim.plan.length; b++) bots[sim.plan[b].bot] = true;
+    check(sc, bots.North && bots.South && bots.East, "The queue is global across bots", Object.keys(bots).join(", "));
+    return finish(sc, sim);
+  }
+
+  function scenarioSupersede() {
+    var sc = scenarioShell("4", "A near scheduled fire supersedes the catch-up", "If the next fire is before or within 15 minutes of availability, the catch-up is dropped.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var soon = addRoutine(sim, {
+      name: "Hourly digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Check the queue.",
+      reportBody: "Should not send.",
+      nextFireAt: reset + 10 * 60 * 1000,
+    });
+    var edge = addRoutine(sim, {
+      name: "Edge digest",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Check the edge.",
+      reportBody: "Should not send.",
+      nextFireAt: reset + SUPERSEDE_MS,
+    });
+    var clear = addRoutine(sim, {
+      name: "Later digest",
+      bot: "East",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Check later.",
+      reportBody: "Later note.",
+      nextFireAt: reset + SUPERSEDE_MS + 1,
+    });
+    fire(sim, { routineId: soon.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: edge.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: clear.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, reset + 10 * STAGGER_MS);
+    check(sc, countLabel(sim, "superseded by scheduled run") === 2, "The 10-minute fire and the 15-minute fire are superseded", String(countLabel(sim, "superseded by scheduled run")));
+    check(sc, sim.reports.length === 1 && sim.reports[0].routineName === "Later digest", "A fire one millisecond outside the window still catches up once", sim.reports[0] && sim.reports[0].routineName);
+    check(sc, sim.reports.every(function (r) { return r.routineName !== "Hourly digest" && r.routineName !== "Edge digest"; }), "Superseded routines do not also deliver a catch-up", "");
+    return finish(sc, sim);
+  }
+
+  function scenarioWrongCause() {
+    var sc = scenarioShell("5", "Other skip reasons do not catch up", "Paused, computer-down, and owner-gate skips stay out of the catch-up queue.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var paused = addRoutine(sim, {
+      name: "Paused digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "each",
+      paused: true,
+      prompt: "Paused work.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var down = addRoutine(sim, {
+      name: "Desk backup",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      computerDown: true,
+      prompt: "Backup the desk.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var gated = addRoutine(sim, {
+      name: "Headroom scout",
+      bot: "East",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      gate: { maxPercent: 40 },
+      prompt: "Scout only under 40% usage.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    fire(sim, { routineId: paused.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: down.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: gated.id, slotAt: friday(), usageBlocked: false, usagePercent: 80, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, reset + 10 * STAGGER_MS);
+    check(sc, hasLabel(sim, "Skipped — paused"), "A paused routine is labeled paused", "");
+    check(sc, hasLabel(sim, "Skipped — computer down"), "A down computer is labeled computer down", "");
+    check(sc, hasLabel(sim, "Skipped — owner gate false"), "A gate miss is labeled owner gate false", "");
+    check(sc, !hasLabel(sim, "Skipped — usage limit"), "None of these rows claim the usage limit", "");
+    check(sc, sim.reports.length === 0 && sim.plan.length === 0, "Availability does not run them", "");
+    return finish(sc, sim);
+  }
+
+  function scenarioGateAtRun() {
+    var sc = scenarioShell("5", "The usage gate is judged again at catch-up time", "A usage-limit skip still has to pass the owner gate when its catch-up starts.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var openGate = addRoutine(sim, {
+      name: "Open scout",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      gate: { maxPercent: 40 },
+      prompt: "Scout under 40%.",
+      reportBody: "Usage is low enough.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var tight = addRoutine(sim, {
+      name: "Tight scout",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      gate: { maxPercent: 40 },
+      prompt: "Scout under 40%.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T18:00:00.000Z"),
+    });
+    fire(sim, { routineId: openGate.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: tight.id, slotAt: friday() + 60 * 1000, usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "owner_raised_limit", usagePercent: 10 });
+    runDue(sim, reset);
+    sim.usagePercent = 55;
+    runDue(sim, reset + 10 * STAGGER_MS);
+    check(sc, countLabel(sim, "Skipped — usage limit") === 2, "Both fires were usage-limit skips", "");
+    check(sc, sim.reports.length === 1 && sim.reports[0].routineName === "Open scout", "The first catch-up runs while usage is under the gate", sim.reports[0] && sim.reports[0].routineName);
+    check(sc, hasLabel(sim, "Not run — owner gate false"), "The later catch-up sees usage above the gate and does not run", "");
+    check(sc, sim.reports.every(function (r) { return r.routineName !== "Tight scout"; }), "The gated-off catch-up delivers no report", "");
+    check(sc, sim.reports[0] && sim.reports[0].reason === "owner raised the limit", "Raising the limit is an availability signal", sim.reports[0] && sim.reports[0].reason);
+    return finish(sc, sim);
+  }
+
+  function scenarioLoop() {
+    var sc = scenarioShell("6", "A catch-up that hits the limit is not a loop and is not done", "The same slot waits for another availability signal. A missing report is not marked done.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var digest = addRoutine(sim, {
+      name: "Weekday digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Summarize tickets.",
+      reportBody: "Two tickets after the top-up.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var blank = addRoutine(sim, {
+      name: "Blank ledger",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      outcome: "missing",
+      prompt: "Write the ledger.",
+      reportBody: "",
+      nextFireAt: Date.parse("2026-10-12T16:00:00.000Z"),
+    });
+    fire(sim, { routineId: blank.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: digest.id, slotAt: friday() + 60 * 1000, usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, reset);
+    sim.usageOpen = false;
+    runDue(sim, reset + 10 * STAGGER_MS);
+    var heldOnce = countLabel(sim, "Catch-up held — usage limit");
+    var incompleteOnce = countLabel(sim, "Catch-up incomplete — no report");
+    runDue(sim, reset + 20 * STAGGER_MS);
+    var digestSkip = null;
+    var blankSkip = null;
+    for (var i = 0; i < sim.skips.length; i++) {
+      var owner = getRoutine(sim, sim.skips[i].routineId);
+      if (owner.name === "Weekday digest") digestSkip = sim.skips[i];
+      if (owner.name === "Blank ledger") blankSkip = sim.skips[i];
+    }
+    check(sc, heldOnce === 1 && countLabel(sim, "Catch-up held — usage limit") === 1, "Hitting the limit again records one hold, and a second drain does not re-queue it", "");
+    check(sc, digestSkip && digestSkip.status === "held" && digestSkip.attempts === 1, "The held slot is not marked done", digestSkip && digestSkip.status);
+    check(sc, incompleteOnce === 1 && blankSkip && blankSkip.status === "held", "A catch-up with no report is not marked done", blankSkip && blankSkip.status);
+    check(sc, sim.reports.length === 0, "Nothing is delivered in that wave", "");
+    sim.usageOpen = true;
+    onUsageAvailable(sim, { at: reset + 24 * 60 * 60 * 1000, reason: "plan_top_up", usagePercent: 0 });
+    setRoutine(sim, blank.id, { outcome: "report", reportBody: "Ledger after the top-up." });
+    runDue(sim, reset + 24 * 60 * 60 * 1000 + 10 * STAGGER_MS);
+    check(sc, sim.reports.length === 2, "The next availability runs each held slot once", String(sim.reports.length));
+    check(sc, sim.reports.some(function (r) { return r.reason === "plan top-up" && r.slotLabel === "2026-10-09 08:00 America/Phoenix"; }), "The top-up report still names the original slot", "");
+    var extra = sim.reports.length;
+    runDue(sim, reset + 48 * 60 * 60 * 1000);
+    check(sc, sim.reports.length === extra, "Completed catch-ups do not run again", "");
+    return finish(sc, sim);
+  }
+
+  function scenarioQuiet() {
+    var sc = scenarioShell("7", "Quiet-on-NONE stays quiet, and the slot name stays", "The catch-up uses the routine's normal delivery rule and does not pretend to be the current slot.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var digest = addRoutine(sim, {
+      name: "Quiet digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      quietOnNone: true,
+      outcome: "none",
+      prompt: "Summarize tickets. If there is nothing to report, stay quiet.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    fire(sim, { routineId: digest.id, slotAt: friday(), usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    runDue(sim, reset + STAGGER_MS);
+    var row = null;
+    for (var i = 0; i < sim.history.length; i++) {
+      if (sim.history[i].label.indexOf("Catch-up for ") === 0) row = sim.history[i];
+    }
+    var skip = sim.skips[0];
+    check(sc, row && row.label === "Catch-up for 2026-10-09 08:00 America/Phoenix", "History names the skipped slot", row && row.label);
+    check(sc, row && row.detail.indexOf("Stayed quiet on NONE") === 0, "The quiet rule is the normal NONE path", row && row.detail);
+    check(sc, sim.chat.length === 1 && sim.chat[0].posted === false, "No chat message is posted", "");
+    check(sc, sim.reports.length === 0, "A quiet NONE is not a posted report", "");
+    check(sc, skip && skip.status === "done", "Quiet delivery is complete, not a missing report", skip && skip.status);
+    check(sc, row && row.label.indexOf("2026-10-12") === -1, "The current Monday slot is not the label", row && row.label);
+    return finish(sc, sim);
+  }
+
+  function scenarioUnknownReset() {
+    var sc = scenarioShell("8", "An unknown reset time does not invent a clock", "The skip records unknown. Catch-up runs when an availability signal arrives.");
+    var sim = createSim(friday());
+    var digest = addRoutine(sim, {
+      name: "Weekday digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Summarize tickets.",
+      reportBody: "Came back after the limit was raised.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    fire(sim, { routineId: digest.id, slotAt: friday(), usageBlocked: true, resetAt: null });
+    var guessedWeek = friday() + 7 * 24 * 60 * 60 * 1000;
+    sim.now = guessedWeek;
+    runDue(sim, guessedWeek);
+    check(sc, sim.history[0].resetLabel === "unknown", "The row says the reset time is unknown", sim.history[0].resetLabel);
+    check(sc, sim.reports.length === 0 && sim.plan.length === 0, "Moving the clock without a signal does not run a catch-up", "");
+    onUsageAvailable(sim, { at: guessedWeek, reason: "owner_raised_limit", usagePercent: 5 });
+    runDue(sim, guessedWeek + STAGGER_MS);
+    check(sc, sim.reports.length === 1, "Raising the limit runs the catch-up once", String(sim.reports.length));
+    check(sc, sim.reports[0].title === "Catch-up for 2026-10-09 08:00 America/Phoenix", "The report still names the skipped slot", sim.reports[0].title);
+    return finish(sc, sim);
+  }
+
+  function scenarioStale() {
+    var sc = scenarioShell("9", "Pause, delete, and edit are read again at catch-up time", "A queued catch-up does not run a routine that was paused or deleted, and an edit uses the current prompt.");
+    var sim = createSim(friday());
+    var reset = sundayReset();
+    var doomed = addRoutine(sim, {
+      name: "Doomed digest",
+      bot: "North",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Old doomed prompt.",
+      promptVersion: 1,
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T15:00:00.000Z"),
+    });
+    var resting = addRoutine(sim, {
+      name: "Resting digest",
+      bot: "South",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Old resting prompt.",
+      promptVersion: 1,
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T16:00:00.000Z"),
+    });
+    var edited = addRoutine(sim, {
+      name: "Edited digest",
+      bot: "East",
+      tz: "Europe/London",
+      catchUp: "latest",
+      prompt: "Summarize Friday's tickets.",
+      promptVersion: 1,
+      reportBody: "This body is from the edited prompt.",
+      nextFireAt: Date.parse("2026-10-12T08:00:00.000Z"),
+    });
+    var unreachable = addRoutine(sim, {
+      name: "Unreachable desk",
+      bot: "West",
+      tz: "America/Phoenix",
+      catchUp: "latest",
+      prompt: "Read the desk.",
+      reportBody: "Should not send.",
+      nextFireAt: Date.parse("2026-10-12T19:00:00.000Z"),
+    });
+    var slot = friday();
+    fire(sim, { routineId: doomed.id, slotAt: slot, usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: resting.id, slotAt: slot + 60 * 1000, usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: edited.id, slotAt: slot + 120 * 1000, usageBlocked: true, resetAt: reset });
+    fire(sim, { routineId: unreachable.id, slotAt: slot + 180 * 1000, usageBlocked: true, resetAt: reset });
+    onUsageAvailable(sim, { at: reset, reason: "weekly_reset", usagePercent: 0 });
+    setRoutine(sim, doomed.id, { deleted: true });
+    setRoutine(sim, resting.id, { paused: true });
+    setRoutine(sim, edited.id, { prompt: "Summarize Saturday's tickets only.", promptVersion: 2, reportBody: "Saturday only, from prompt v2." });
+    setRoutine(sim, unreachable.id, { computerDown: true });
+    runDue(sim, reset + 10 * STAGGER_MS);
+    check(sc, hasLabel(sim, "Dropped — routine deleted"), "Delete drops the queued catch-up", "");
+    check(sc, hasLabel(sim, "Dropped — routine paused"), "Pause drops the queued catch-up", "");
+    check(sc, sim.reports.length === 1 && sim.reports[0].routineName === "Edited digest", "The edited routine still catches up once", "");
+    check(sc, sim.reports[0] && sim.reports[0].promptVersion === 2, "The report uses the edited prompt", String(sim.reports[0] && sim.reports[0].promptVersion));
+    check(sc, sim.reports[0] && sim.reports[0].prompt === "Summarize Saturday's tickets only.", "The old prompt text is not what runs", sim.reports[0] && sim.reports[0].prompt);
+    check(sc, sim.reports[0] && sim.reports[0].slotLabel.indexOf("Europe/London") !== -1, "The label keeps the original slot in that routine's time zone", sim.reports[0] && sim.reports[0].slotLabel);
+    check(sc, sim.reports.every(function (r) { return r.routineName !== "Doomed digest" && r.routineName !== "Resting digest" && r.routineName !== "Unreachable desk"; }), "Deleted, paused, and unreachable routines do not deliver", "");
+    check(sc, hasLabel(sim, "Not run — computer unavailable"), "A computer that is down at catch-up time does not run", "");
+    var unreachableSkip = null;
+    for (var u = 0; u < sim.skips.length; u++) {
+      if (sim.skips[u].routineId === unreachable.id) unreachableSkip = sim.skips[u];
+    }
+    check(sc, unreachableSkip && unreachableSkip.status === "held", "The unreachable catch-up is held, not done", unreachableSkip && unreachableSkip.status);
+    return finish(sc, sim);
+  }
+
+  function demonstrate() {
+    return [
+      scenarioTrace(),
+      scenarioDefaultOff(),
+      scenarioLatest(),
+      scenarioStagger(),
+      scenarioSupersede(),
+      scenarioWrongCause(),
+      scenarioGateAtRun(),
+      scenarioLoop(),
+      scenarioQuiet(),
+      scenarioUnknownReset(),
+      scenarioStale(),
+    ];
+  }
+
+  root.CatchUp = {
+    EACH_CAP: EACH_CAP,
+    SUPERSEDE_MS: SUPERSEDE_MS,
+    STAGGER_MS: STAGGER_MS,
+    OPERATOR_TZ: OPERATOR_TZ,
+    formatSlot: formatSlot,
+    createSim: createSim,
+    addRoutine: addRoutine,
+    setRoutine: setRoutine,
+    fire: fire,
+    onUsageAvailable: onUsageAvailable,
+    runDue: runDue,
+    demonstrate: demonstrate,
+    historyLabels: historyLabels,
+  };
+})(typeof globalThis !== "undefined" ? globalThis : this);
+  </script>
+  <script>
+    const liveByTitle = {
+      "Usage-limit skip leaves a history row": ["FAIL", "Live run history is Running, Succeeded, or Failed."],
+      "Existing routines stay off": ["FAIL", "Live routines have no catch-up setting, so a skip is not replayed."],
+      "Latest skipped run, labeled as that slot": ["FAIL", "Live docs do not show one labeled catch-up after reset."],
+      "Catch-ups are queued, not burst": ["FAIL", "Live docs do not show a stagger queue for these skips."],
+      "A near scheduled fire supersedes the catch-up": ["FAIL", "Live docs do not show superseded by scheduled run."],
+      "Other skip reasons do not catch up": ["FAIL", "Live docs do not show a catch-up filter for pause, gate, or computer."],
+      "The usage gate is judged again at catch-up time": ["FAIL", "Live docs do not show a catch-up start that re-reads the gate."],
+      "A catch-up that hits the limit is not a loop and is not done": ["FAIL", "Live docs do not show a held catch-up or a no-report rule."],
+      "Quiet-on-NONE stays quiet, and the slot name stays": ["FAIL", "Live docs do not show a catch-up title tied to the skipped slot."],
+      "An unknown reset time does not invent a clock": ["UNVERIFIED", "The owner can see a reset time in Settings. This check did not watch the scheduler store it."],
+      "Pause, delete, and edit are read again at catch-up time": ["FAIL", "Live pause and delete cancel waiting runs. They do not define this catch-up."]
+    };
+
+    const FRIDAY = Date.parse("2026-10-09T15:00:00.000Z");
+    const RESET = Date.parse("2026-10-11T07:00:00.000Z");
+    const MONDAY = Date.parse("2026-10-12T15:00:00.000Z");
+
+    function h(value) {
+      return String(value ?? "").replace(/[&<>"]/g, function (ch) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[ch];
+      });
+    }
+
+    function table(headers, rows) {
+      if (!rows.length) return "<p class=\"quiet\">Nothing yet.</p>";
+      const head = "<tr>" + headers.map(function (name) { return "<th>" + h(name) + "</th>"; }).join("") + "</tr>";
+      const body = rows.map(function (row) {
+        return "<tr>" + row.map(function (cell, index) {
+          const cls = index === 2 ? " class=\"lbl\"" : "";
+          return "<td" + cls + ">" + h(cell) + "</td>";
+        }).join("") + "</tr>";
+      }).join("");
+      return "<div class=\"scroll\"><table><thead>" + head + "</thead><tbody>" + body + "</tbody></table></div>";
+    }
+
+    function historyTable(history) {
+      return table(
+        ["When", "Routine", "Label", "Slot", "Reset seen", "Detail"],
+        history.map(function (row) {
+          return [row.atLabel, row.bot + " · " + row.routineName, row.label, row.slotLabel, row.resetLabel, row.detail];
+        })
+      );
+    }
+
+    function renderCases() {
+      const scenarios = CatchUp.demonstrate();
+      const root = document.getElementById("case-list");
+      const broken = scenarios.some(function (scenario) { return !scenario.ok; });
+      root.innerHTML = scenarios.map(function (scenario) {
+        const grade = liveByTitle[scenario.title] || ["FAIL", ""];
+        const checks = scenario.checks.map(function (check) {
+          return "<li><span class=\"mark" + (check.ok ? "" : " bad") + "\">" + (check.ok ? "Holds" : "Broken") + "</span><span>" + h(check.name) + (check.detail ? " — " + h(check.detail) : "") + "</span></li>";
+        }).join("");
+        const plan = table(
+          ["Bot", "Routine", "Slot", "Start", "Signal"],
+          scenario.sim.plan.map(function (row) {
+            return [row.bot, row.routineName, row.slotLabel, row.startLabel, row.reason];
+          })
+        );
+        const chat = table(
+          ["Routine", "Posted", "Title", "Prompt", "Body"],
+          scenario.sim.chat.map(function (row) {
+            return [row.routineName, row.posted ? "Yes" : "No, stayed quiet", row.title, "v" + row.promptVersion, row.body || "—"];
+          })
+        );
+        return "<details class=\"card\"" + (scenario.id === "1" ? " open" : "") + "><summary>" + h(scenario.title) + "</summary>"
+          + "<p class=\"live-grade" + (grade[0] === "UNVERIFIED" ? " unverified" : "") + "\">Live grade: " + h(grade[0]) + "</p>"
+          + "<p class=\"ask\">" + h(grade[1]) + " " + h(scenario.ask) + "</p>"
+          + "<ul class=\"checks\">" + checks + "</ul>"
+          + "<h3>History</h3>" + historyTable(scenario.sim.history)
+          + "<h3>Queue</h3>" + plan
+          + "<h3>Delivery</h3>" + chat
+          + "</details>";
+      }).join("") + (broken ? "<p class=\"live-grade\">Draft simulation broken</p>" : "<p class=\"note\">11 draft scenarios hold. The live banner stays FAIL.</p>");
+    }
+
+    function nextFireAt(mode) {
+      if (mode === "ten") return RESET + 10 * 60 * 1000;
+      if (mode === "fifteen") return RESET + CatchUp.SUPERSEDE_MS;
+      if (mode === "outside") return RESET + CatchUp.SUPERSEDE_MS + 1;
+      return MONDAY;
+    }
+
+    function seedBench() {
+      const sim = CatchUp.createSim(FRIDAY);
+      sim.cursor = RESET;
+      const specs = [
+        ["Weekday digest", "North", "America/Phoenix", "Summarize overnight tickets. If there is nothing to report, stay quiet.", "Four tickets waiting on billing."],
+        ["Hourly digest", "North", "America/Phoenix", "Check the hourly queue.", "Hourly note."],
+        ["Standup", "South", "America/Phoenix", "Post the standup.", "Standup note."]
+      ];
+      specs.forEach(function (spec, index) {
+        CatchUp.addRoutine(sim, {
+          name: spec[0],
+          bot: spec[1],
+          tz: spec[2],
+          catchUp: "off",
+          prompt: spec[3],
+          promptVersion: 1,
+          reportBody: spec[4],
+          outcome: "report",
+          nextFireAt: MONDAY,
+          sampleSlotAt: FRIDAY + index * 15 * 60 * 1000,
+          sampleResetAt: RESET
+        });
+      });
+      return sim;
+    }
+
+    let bench = seedBench();
+
+    function selected() {
+      const id = document.getElementById("routine").value;
+      for (let i = 0; i < bench.routines.length; i++) {
+        if (bench.routines[i].id === id) return bench.routines[i];
+      }
+      return bench.routines[0];
+    }
+
+    function syncControls() {
+      const routine = selected();
+      if (!routine) return;
+      document.getElementById("mode").value = routine.catchUp;
+      document.getElementById("quiet").checked = routine.quietOnNone;
+      document.getElementById("gate").value = routine.gate ? routine.gate.maxPercent : "";
+    }
+
+    function renderBench(preferredId) {
+      const select = document.getElementById("routine");
+      const current = preferredId || select.value;
+      select.innerHTML = bench.routines.map(function (routine) {
+        const flags = [routine.catchUp, routine.paused ? "paused" : "", routine.deleted ? "deleted" : "", routine.computerDown ? "computer down" : ""].filter(Boolean).join(", ");
+        return "<option value=\"" + h(routine.id) + "\">" + h(routine.bot + " · " + routine.name + " (" + flags + ")") + "</option>";
+      }).join("");
+      const hasCurrent = current && Array.prototype.some.call(select.options, function (option) { return option.value === current; });
+      select.value = hasCurrent ? current : (bench.routines[0] ? bench.routines[0].id : "");
+      syncControls();
+      document.getElementById("bench-history").innerHTML = historyTable(bench.history);
+      document.getElementById("bench-plan").innerHTML = table(
+        ["Bot", "Routine", "Slot", "Start", "Signal"],
+        bench.plan.map(function (row) { return [row.bot, row.routineName, row.slotLabel, row.startLabel, row.reason]; })
+      );
+      document.getElementById("bench-chat").innerHTML = table(
+        ["Routine", "Posted", "Title", "Prompt", "Body"],
+        bench.chat.map(function (row) {
+          return [row.routineName, row.posted ? "Yes" : "No, stayed quiet", row.title, "v" + row.promptVersion, row.body || "—"];
+        })
+      );
+    }
+
+    function applyMode() {
+      const routine = selected();
+      const quiet = document.getElementById("quiet").checked;
+      const gateRaw = document.getElementById("gate").value;
+      CatchUp.setRoutine(bench, routine.id, {
+        catchUp: document.getElementById("mode").value,
+        nextFireAt: nextFireAt(document.getElementById("next-fire").value),
+        quietOnNone: quiet,
+        outcome: quiet ? "none" : "report",
+        gate: gateRaw === "" ? null : { maxPercent: Number(gateRaw) },
+        computerDown: false
+      });
+    }
+
+    function record(kind) {
+      if (kind === "gate" && document.getElementById("gate").value === "") {
+        document.getElementById("gate").value = "40";
+      }
+      if (kind === "gate") {
+        const max = Number(document.getElementById("gate").value);
+        const usage = Math.max(Number(document.getElementById("usage").value || 0), max);
+        document.getElementById("usage").value = String(usage);
+      }
+      applyMode();
+      const routine = selected();
+      if (routine.deleted) return;
+      const patch = {};
+      if (kind === "paused") patch.paused = true;
+      if (kind === "down") patch.computerDown = true;
+      CatchUp.setRoutine(bench, routine.id, patch);
+      const usage = Number(document.getElementById("usage").value || 0);
+      CatchUp.fire(bench, {
+        routineId: routine.id,
+        slotAt: routine.sampleSlotAt,
+        at: routine.sampleSlotAt,
+        usageBlocked: kind === "usage",
+        usagePercent: kind === "gate" ? Math.max(usage, routine.gate ? routine.gate.maxPercent : 80) : usage,
+        resetAt: routine.sampleResetAt
+      });
+      CatchUp.setRoutine(bench, routine.id, { sampleSlotAt: routine.sampleSlotAt + 60 * 60 * 1000 });
+      renderBench();
+    }
+
+    function release(reason) {
+      applyMode();
+      const at = bench.cursor;
+      bench.cursor = at + 60 * 1000;
+      bench.usagePercent = Number(document.getElementById("usage").value || 0);
+      CatchUp.onUsageAvailable(bench, { at: at, reason: reason, usagePercent: bench.usagePercent });
+      if (document.getElementById("close-usage").checked) bench.usageOpen = false;
+      renderBench();
+    }
+
+    document.getElementById("controls").addEventListener("submit", function (event) { event.preventDefault(); });
+    document.getElementById("routine").addEventListener("change", syncControls);
+    document.getElementById("mode").addEventListener("change", function () { applyMode(); renderBench(); });
+    document.getElementById("skip-usage").addEventListener("click", function () { record("usage"); });
+    document.getElementById("skip-paused").addEventListener("click", function () { record("paused"); });
+    document.getElementById("skip-down").addEventListener("click", function () { record("down"); });
+    document.getElementById("skip-gate").addEventListener("click", function () { record("gate"); });
+    document.getElementById("weekly").addEventListener("click", function () { release("weekly_reset"); });
+    document.getElementById("topup").addEventListener("click", function () { release("plan_top_up"); });
+    document.getElementById("raised").addEventListener("click", function () { release("owner_raised_limit"); });
+    document.getElementById("run").addEventListener("click", function () {
+      applyMode();
+      if (document.getElementById("close-usage").checked) bench.usageOpen = false;
+      else bench.usageOpen = true;
+      bench.usagePercent = Number(document.getElementById("usage").value || 0);
+      CatchUp.runDue(bench, bench.now + 10 * CatchUp.STAGGER_MS + 60 * 60 * 1000);
+      renderBench();
+    });
+    document.getElementById("pause").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { paused: true });
+      renderBench();
+    });
+    document.getElementById("resume").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { paused: false, computerDown: false });
+      renderBench();
+    });
+    document.getElementById("edit").addEventListener("click", function () {
+      const routine = selected();
+      CatchUp.setRoutine(bench, routine.id, {
+        promptVersion: routine.promptVersion + 1,
+        prompt: routine.prompt + " Edited.",
+        reportBody: "Report from prompt v" + (routine.promptVersion + 1) + "."
+      });
+      renderBench();
+    });
+    document.getElementById("remove").addEventListener("click", function () {
+      CatchUp.setRoutine(bench, selected().id, { deleted: true });
+      renderBench();
+    });
+    document.getElementById("reset-bench").addEventListener("click", function () {
+      bench = seedBench();
+      document.getElementById("usage").value = "0";
+      document.getElementById("gate").value = "";
+      document.getElementById("close-usage").checked = false;
+      document.getElementById("quiet").checked = false;
+      document.getElementById("next-fire").value = "far";
+      renderBench(bench.routines[0].id);
+    });
+    document.getElementById("expand").addEventListener("click", function () {
+      document.querySelectorAll("#case-list details").forEach(function (el) { el.open = true; });
+    });
+    document.getElementById("collapse").addEventListener("click", function () {
+      document.querySelectorAll("#case-list details").forEach(function (el) { el.open = false; });
+    });
+
+    renderCases();
+    renderBench();
+  </script>
+</body>
+</html>
