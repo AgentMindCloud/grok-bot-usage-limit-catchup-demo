@@ -8,9 +8,9 @@ Drafts in this project do not clear the FAIL. The page at `demo/index.html` simu
 
 ## Ask
 
-[lokgupt_a on X, status 2107799423069851863](https://x.com/lokgupt_a/status/2107799423069851863) asked whether a routine skipped because the usage limit was hit can automatically catch up, with its report, once the limit resets.
+A user on X asked whether a routine skipped because the usage limit was hit can automatically catch up, with its report, once the limit resets.
 
-The X API client for this session is not enrolled, and a public fetch of that status hit a bot check, so the post body was not re-read here. The sentence above is the ask this receipt grades.
+The X API client for this session is not enrolled, and a public fetch of that post hit a bot check, so the post body was not re-read here. The sentence above is the ask this receipt grades.
 
 ## What would pass
 
@@ -67,7 +67,7 @@ The changelog text fetched the same day, through the latest listed release v0.68
 
 [Grok Bot FAQs](https://cursor.com/help/grok-bot/faqs): weekly usage resets each week. The way to keep going is on-demand or a bigger plan. Routines are not described as replaying missed slots.
 
-Staff reply from @deanrie on 13 Sep 2026, on [All Grok Bots silent on iOS](https://forum.cursor.com/t/all-grok-bots-silent-on-ios-agent-computer-visible-but-no-replies/171458):
+Staff reply on 13 Sep 2026, on [All Grok Bots silent on iOS](https://forum.cursor.com/t/all-grok-bots-silent-on-ios-agent-computer-visible-but-no-replies/171458):
 
 > Two notes: messages sent during the block stay queued. The bots will reply to them in a batch as soon as usage is available again. Scheduled routines that were due during the block were skipped.
 
